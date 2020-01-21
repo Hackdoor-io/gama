@@ -1,1 +1,1 @@
-web: gama
+web: main -port $PORT
