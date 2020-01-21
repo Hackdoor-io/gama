@@ -1,0 +1,1 @@
+![Gama](/misc/gama.png)
