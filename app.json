@@ -1,0 +1,15 @@
+{
+  "name": "gama",
+  "description": "JSMonday to Hackdoor router",
+  "buildpacks": [
+    {
+      "url": "https://github.com/heroku/heroku-buildpack-go"
+    }
+  ],
+  "scripts": {
+    "dokku": {
+      "predeploy": "touch predeploy.test",
+      "postdeploy": "touch postdeploy.test"
+    }
+  }
+}
