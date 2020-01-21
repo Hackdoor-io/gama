@@ -21,7 +21,7 @@ func makeHashId(id string, target string) string {
     case "articles":
       targetSalt = "ARTICLES_SALT"
       break
-    case "tags":
+    case "topics":
       targetSalt = "TOPICS_SALT"
       break
     case "authors":
@@ -45,6 +45,15 @@ func makeHashId(id string, target string) string {
   return encodedHashId
 }
 
+func remapTarget(target string) string {
+  switch target {
+    case "tags":
+      return "topics"
+    default:
+      return target
+  }
+}
+
 func main() {
 
   if os.Getenv("ENV") == "development" {
@@ -57,22 +66,27 @@ func main() {
   port := os.Getenv("PORT")
   hackdoor := os.Getenv("HACKDOOR_ENDPOINT")
 
-  http.HandleFunc("/{target:articles|tags|authors|patrons}/{id:[0-9]+}/{path:(\\w+?_?-?\\d?)+}", func (w http.ResponseWriter, r *http.Request) {
+  r := mux.NewRouter()
+
+  r.HandleFunc("/{target}/{id}/{path}", func (w http.ResponseWriter, r *http.Request) {
     pathVars := mux.Vars(r)
-    target := pathVars["target"]
+    var target = remapTarget(pathVars["target"])
     id := pathVars["id"]
     path := pathVars["path"]
     hashId := makeHashId(id, target)
 
-    redirectPath := hackdoor + "/" + target + "/" + hashId + "/" + path
+    redirectPath := hackdoor + "/" + target + "/" + hashId + "/" + path + "?source=gama"
 
     http.Redirect(w, r, redirectPath, http.StatusPermanentRedirect)
   })
 
-  http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+
+  r.HandleFunc("*", func(w http.ResponseWriter, r *http.Request) {
     fmt.Printf("[ROUTER] -> %s\n", r.URL.Path)
     http.Redirect(w, r, hackdoor + "?source=gama", http.StatusPermanentRedirect)
   })
+
+  http.Handle("/", r)
 
   fmt.Printf("Running Gama at http://localhost:%s\n", port)
   http.ListenAndServe(":" + port, nil)
