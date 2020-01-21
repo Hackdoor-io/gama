@@ -3,7 +3,9 @@ package main
 import (
   "fmt"
   "github.com/gorilla/mux"
+  "github.com/joho/godotenv"
   "github.com/speps/go-hashids"
+  "log"
   "net/http"
   "os"
   "strconv"
@@ -45,26 +47,27 @@ func makeHashId(id string, target string) string {
 
 func main() {
 
+  if os.Getenv("ENV") == "development" {
+    err := godotenv.Load()
+    if err != nil {
+      log.Fatal("Error loading .env file")
+    }
+  }
+
   port := os.Getenv("PORT")
   hackdoor := os.Getenv("HACKDOOR_ENDPOINT")
 
-  var dynamicRoutes = [4]string{"articles", "tags", "authors", "patrons"}
+  http.HandleFunc("/{target:articles|tags|authors|patrons}/{id:[0-9]+}/{path:(\\w+?_?-?\\d?)+}", func (w http.ResponseWriter, r *http.Request) {
+    pathVars := mux.Vars(r)
+    target := pathVars["target"]
+    id := pathVars["id"]
+    path := pathVars["path"]
+    hashId := makeHashId(id, target)
 
-  for _, route := range dynamicRoutes {
+    redirectPath := hackdoor + "/" + target + "/" + hashId + "/" + path
 
-    fmt.Printf("Created route /%s\n", route)
-
-    http.HandleFunc("/" + route + "/{id:[0-9]+}/{path:(\\w+?_?-?\\d?)+}", func (w http.ResponseWriter, r *http.Request) {
-      pathVars := mux.Vars(r)
-      id := pathVars["id"]
-      path := pathVars["path"]
-      hashId := makeHashId(id, route)
-
-      redirectPath := hackdoor + "/" + route + "/" + hashId + "/" + path
-
-      http.Redirect(w, r, redirectPath, http.StatusPermanentRedirect)
-    })
-  }
+    http.Redirect(w, r, redirectPath, http.StatusPermanentRedirect)
+  })
 
   http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
     fmt.Printf("[ROUTER] -> %s\n", r.URL.Path)
