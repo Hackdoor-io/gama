@@ -81,9 +81,9 @@ func main() {
   })
 
 
-  r.HandleFunc("*", func(w http.ResponseWriter, r *http.Request) {
+  r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     fmt.Printf("[ROUTER] -> %s\n", r.URL.Path)
-    http.Redirect(w, r, hackdoor + "?source=gama", http.StatusPermanentRedirect)
+    http.Redirect(w, r, hackdoor + r.URL.Path + "?source=gama", http.StatusPermanentRedirect)
   })
 
   http.Handle("/", r)
