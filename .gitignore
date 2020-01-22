@@ -105,6 +105,7 @@ fabric.properties
 .idea/**/sonarlint/
 .idea
 .env
+vendor
 
 # SonarQube Plugin
 .idea/**/sonarIssues.xml
